@@ -1,0 +1,10 @@
+[Unit]
+Description=Onair Webcamera Schedule
+
+[Timer]
+AccuracySec=1s
+OnBootSec=5
+OnUnitActiveSec=5
+
+[Install]
+WantedBy=timers.target

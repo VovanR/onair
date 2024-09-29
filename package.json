@@ -1,5 +1,6 @@
 {
   "name": "onair",
+  "description": "Webcamera onair status",
   "version": "0.0.0",
   "main": "index.js",
   "type": "module",
@@ -9,7 +10,6 @@
   },
   "author": "Vladimir Rodkin <mail@vovanr.com> (https://vovanr.com/)",
   "license": "MIT",
-  "description": "",
   "dependencies": {
     "fastify": "^5.0.0"
   }

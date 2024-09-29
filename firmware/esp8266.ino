@@ -5,17 +5,14 @@
 const char* ssid = "REPLACE_WITH_YOUR_SSID";
 const char* password = "REPLACE_WITH_YOUR_PASSWORD";
 
-//Your Domain name with URL path or IP address with path
+// Your Domain name with URL path or IP address with path
 String serverName = "http://192.168.1.1:3000";
 
 WiFiClient wifiClient;
 
-// the following variables are unsigned longs because the time, measured in
+// The following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
 unsigned long lastTime = 0;
-// Timer set to 10 minutes (600000)
-//unsigned long timerDelay = 600000;
-// Set timer to 5 seconds (5000)
 unsigned long timerDelay = 5000;
 
 #define LED_BUILTINN D4
@@ -40,10 +37,10 @@ void setup() {
 }
 
 void loop() {
-  //Send an HTTP POST request every 10 minutes
+  // Send an HTTP POST request every 10 minutes
   if ((millis() - lastTime) > timerDelay) {
-    //Check WiFi connection status
-    if(WiFi.status()== WL_CONNECTED){
+    // Check WiFi connection status
+    if (WiFi.status() == WL_CONNECTED){
       HTTPClient http;
 
       String serverPath = serverName + "/api/status";
@@ -62,6 +59,7 @@ void loop() {
         Serial.println(httpResponseCode);
         String payload = http.getString();
         Serial.println(payload);
+        // TODO: Use JSON parser to read "status" value
         if (payload == "{\"status\":\"ok\",\"responseData\":{\"status\":true}}") {
           // Turn the LED on (Note that LOW is the voltage level
           digitalWrite(LED_BUILTINN, LOW);
@@ -69,8 +67,7 @@ void loop() {
           // Turn the LED off by making the voltage HIGH
           digitalWrite(LED_BUILTINN, HIGH);
         }
-      }
-      else {
+      } else {
         Serial.print("Error code: ");
         Serial.println(httpResponseCode);
         // Turn the LED off by making the voltage HIGH
@@ -78,8 +75,7 @@ void loop() {
       }
       // Free resources
       http.end();
-    }
-    else {
+    } else {
       Serial.println("WiFi Disconnected");
     }
     lastTime = millis();

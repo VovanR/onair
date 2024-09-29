@@ -1,9 +1,18 @@
 import Fastify from "fastify";
 
-const STATUS_LIVETIME_MS = 5000;
+/**
+ * One second more than PC ping to prevent ESP32 led blinking
+ */
+const STATUS_LIFETIME_MS = 6000;
 const PORT = 3000;
+/**
+ * Set "0.0.0.0" if started in container
+ */
 const HOST = "0.0.0.0";
-const LOGGER_ENABLED = true;
+/**
+ * For debug
+ */
+const LOGGER_ENABLED = false;
 
 const fastify = Fastify({
   logger: LOGGER_ENABLED,
@@ -12,7 +21,7 @@ const fastify = Fastify({
 const Status = {
   status: false,
   timestamp: Date.now(),
-  livetime: STATUS_LIVETIME_MS,
+  livetime: STATUS_LIFETIME_MS,
   getStatus() {
     if ((Date.now() - this.timestamp) > this.livetime) {
       return false;
