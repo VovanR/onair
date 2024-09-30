@@ -1,5 +1,5 @@
 [Unit]
-Description=Onair Webcamera Schedule
+Description=Onair Webcamera and Microphone Schedule
 
 [Timer]
 AccuracySec=1s

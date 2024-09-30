@@ -1,5 +1,5 @@
 [Unit]
-Description=Onair Webcamera Daemon
+Description=Onair Webcamera and Microphone Daemon
 Wants=network-online.target
 After=network-online.target
 

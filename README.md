@@ -1,6 +1,6 @@
 # onair
 
-> Webcamera onair status
+> Webcamera and Microphone onair status
 
 ## Start server
 
@@ -25,5 +25,5 @@ curl http://localhost:3000/api/status
 ### Set status
 
 ```sh
-curl -d '{"status":true}' -X POST http://localhost:3000/api/status -H "Content-Type: application/json"
+curl -d '{"camera":true,"microphone":true}' -X POST http://localhost:3000/api/status -H "Content-Type: application/json"
 ```

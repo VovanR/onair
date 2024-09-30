@@ -1,6 +1,6 @@
 {
   "name": "onair",
-  "description": "Webcamera onair status",
+  "description": "Webcamera and Microphone onair status",
   "version": "0.0.0",
   "main": "index.js",
   "type": "module",
