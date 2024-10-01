@@ -1,18 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <style>
+    body {
+      font-size: 2em;
+
+    }
+
+    input[type="checkbox"] {
+      font: inherit;
+      width: 0.75em;
+      height: 0.75em;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        color: whitesmoke;
+        background-color: rgb(15, 17, 24);
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <form id="status" action="">
+    <div>
+      <label>
+        <input name="camera" type="checkbox" />
+        <span>camera</span>
+      </label>
+    </div>
+    <div>
+      <label>
+        <input name="microphone" type="checkbox" />
+        <span>microphone</span>
+      </label>
+    </div>
+  </form>
+
   <script>
-    fetch("http://127.0.0.1:3000/api/status")
-      .then((response) => response.json())
-      .then((response) => console.log(response))
-      .then(() => {
-        var l = new WebSocket("ws://127.0.0.1:3000/api/ws/status")
+    const formStatus = document.forms.status;
+    formStatus.addEventListener("change", () => {
+      setStatus();
+    });
+    formStatus.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+    function getStatus() {
+      return fetch("http://127.0.0.1:3000/api/status")
+        .then((response) => response.json())
+        .then((response) => {
+          const { status } = response;
+          if (status === "ok") {
+            const { responseData: { camera, microphone } } = response;
+            formStatus.elements.camera.checked = camera;
+            formStatus.elements.microphone.checked = microphone;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+    function setStatus() {
+      const { camera, microphone } = formStatus.elements;
+      return fetch("http://127.0.0.1:3000/api/status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          camera: camera.checked,
+          microphone: microphone.checked,
+        }),
       });
+    }
+    function pollStatus() {
+      if (document.hidden) {
+        setTimeout(() => {
+          pollStatus();
+        }, 1000);
+        return;
+      }
+      getStatus().then(() => {
+        setTimeout(() => {
+          pollStatus();
+        }, 1000);
+      });
+    }
+    // const websocket = new WebSocket("ws://127.0.0.1:3000/api/ws/status");
+    // websocket.addEventListener("message", (event) => {
+    //   console.log(event)
+    // });
+
+    const StatusPolling = {
+      started: false,
+      nextStepTimeout: -1,
+      start() {
+        if (this.started) {
+          return;
+        }
+        this.started = true;
+        this.step();
+      },
+      stop() {
+        this.started = false;
+        clearTimeout(this.nextStepTimeout);
+      },
+      step() {
+        getStatus().then(() => {
+          this.nextStepTimeout = setTimeout(() => this.step(), 1000);
+        });
+      },
+    };
+
+    StatusPolling.start();
+
+    document.addEventListener("visibilitychange", (event) => {
+      if (document.hidden) {
+        StatusPolling.stop();
+      } else {
+        StatusPolling.start();
+      }
+    });
   </script>
 </body>
+
 </html>
