@@ -4,11 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>onair</title>
   <style>
     body {
       font-size: 2em;
-
     }
 
     input[type="checkbox"] {
@@ -42,7 +41,17 @@
     </div>
   </form>
 
+  <div>
+    <output id="serverStatus">initialize</output>
+  </div>
+
   <script>
+    const POLLING_TIMEOUT_MS = 1000;
+    const WEBSOCKET_RECONNECT_TIMEOUT_MS = 3000;
+
+    /**
+     * @type HTMLFormElement
+     */
     const formStatus = document.forms.status;
     formStatus.addEventListener("change", () => {
       setStatus();
@@ -50,24 +59,67 @@
     formStatus.addEventListener("submit", (event) => {
       event.preventDefault();
     });
+
+    /**
+     * @type HTMLOutputElement
+     */
+    const serverStatusElement = document.querySelector("#serverStatus");
+    /**
+     * @type WebSocket
+     */
+    let websocket;
+    function connect() {
+      websocket = new WebSocket("/api/ws/status");
+      websocket.addEventListener("message", (event) => {
+        serverStatusElement.value = "live";
+        try {
+          const { camera, microphone } = JSON.parse(event.data);
+          formStatus.elements.camera.checked = camera;
+          formStatus.elements.microphone.checked = microphone;
+        } catch (error) {
+          serverStatusElement.value = "failed to parse WebSocket response";
+        }
+      });
+      websocket.addEventListener("close", (event) => {
+        serverStatusElement.value = "closed";
+        if (event.code !== 1000) {
+          serverStatusElement.value = "reconnect";
+          setTimeout(() => {
+            connect();
+          }, WEBSOCKET_RECONNECT_TIMEOUT_MS);
+        }
+      });
+      websocket.addEventListener("error", () => {
+        serverStatusElement.value = "error";
+      });
+      websocket.addEventListener("open", () => {
+        serverStatusElement.value = "open";
+      });
+    }
+    connect();
+
     function getStatus() {
-      return fetch("http://127.0.0.1:3000/api/status")
-        .then((response) => response.json())
-        .then((response) => {
-          const { status } = response;
-          if (status === "ok") {
-            const { responseData: { camera, microphone } } = response;
-            formStatus.elements.camera.checked = camera;
-            formStatus.elements.microphone.checked = microphone;
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+      if (websocket.readyState === WebSocket.OPEN) {
+        websocket.send("getStatus");
+      }
+      return Promise.resolve();
+      // return fetch("/api/status")
+      //   .then((response) => response.json())
+      //   .then((response) => {
+      //     const { status } = response;
+      //     if (status === "ok") {
+      //       const { responseData: { camera, microphone } } = response;
+      //       formStatus.elements.camera.checked = camera;
+      //       formStatus.elements.microphone.checked = microphone;
+      //     }
+      //   })
+      //   .catch((error) => {
+      //     console.error(error);
+      //   });
     }
     function setStatus() {
       const { camera, microphone } = formStatus.elements;
-      return fetch("http://127.0.0.1:3000/api/status", {
+      return fetch("/api/status", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,25 +128,24 @@
           camera: camera.checked,
           microphone: microphone.checked,
         }),
-      });
+      })
+        .catch((error) => {
+          serverStatusElement.value = "failed to set status";
+        });
     }
     function pollStatus() {
       if (document.hidden) {
         setTimeout(() => {
           pollStatus();
-        }, 1000);
+        }, POLLING_TIMEOUT_MS);
         return;
       }
       getStatus().then(() => {
         setTimeout(() => {
           pollStatus();
-        }, 1000);
+        }, POLLING_TIMEOUT_MS);
       });
     }
-    // const websocket = new WebSocket("ws://127.0.0.1:3000/api/ws/status");
-    // websocket.addEventListener("message", (event) => {
-    //   console.log(event)
-    // });
 
     const StatusPolling = {
       started: false,
@@ -112,7 +163,7 @@
       },
       step() {
         getStatus().then(() => {
-          this.nextStepTimeout = setTimeout(() => this.step(), 1000);
+          this.nextStepTimeout = setTimeout(() => this.step(), POLLING_TIMEOUT_MS);
         });
       },
     };

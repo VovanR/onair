@@ -24,15 +24,15 @@ const fastify = Fastify({
 fastify.register(fastifyWebsocket);
 fastify.register(fastifyStatic, {
   root: path.join(import.meta.dirname, "public"),
-  // prefix: '/public/', // optional: default '/'
-  // constraints: { host: 'example.com' }
+  // prefix: "/public/", // optional: default "/"
+  // constraints: { host: "example.com" }
 });
 
 class Status {
   #status = false;
   #timestamp = Date.now();
   #livetime = STATUS_LIFETIME_MS;
-  constructor() {}
+  constructor() { }
   getStatus() {
     if (Date.now() - this.#timestamp > this.#livetime) {
       return false;
@@ -71,10 +71,17 @@ fastify.get("/api/status", (request, reply) => {
   });
 });
 
-fastify.get("/api/ws/status", { websocket: true }, (socket, request) => {
-  // socket.on("message", (message) => {
-  //   console.log("WS MESSAGE", message);
-  // });
+fastify.register(async function (fastify) {
+  fastify.get("/api/ws/status", { websocket: true }, (socket) => {
+    socket.on("message", (message) => {
+      if (message.toString() === "getStatus") {
+        socket.send(JSON.stringify({
+          camera: cameraStatus.getStatus(),
+          microphone: microphoneStatus.getStatus(),
+        }));
+      }
+    });
+  });
 });
 
 /**
