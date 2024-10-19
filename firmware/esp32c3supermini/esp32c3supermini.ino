@@ -2,10 +2,9 @@
 #include <WiFiClient.h>
 #include <ESP8266HTTPClient.h>
 
-const char* ssid = "REPLACE_WITH_YOUR_SSID";
-const char* password = "REPLACE_WITH_YOUR_PASSWORD";
+const char* ssid = "***";
+const char* password = "***";
 
-// Your Domain name with URL path or IP address with path
 String serverAddress = "http://192.168.1.1:3000";
 
 WiFiClient wifiClient;
