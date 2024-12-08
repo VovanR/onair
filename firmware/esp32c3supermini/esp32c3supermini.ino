@@ -1,30 +1,27 @@
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266HTTPClient.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include "../secrets.h"
 
-const char* ssid = "***";
-const char* password = "***";
-
+// Your Domain name with URL path or IP address with path
 String serverAddress = "http://192.168.1.1:3000";
-
-WiFiClient wifiClient;
 
 // The following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
 unsigned long lastTime = 0;
-unsigned long timerDelay = 5000;
+unsigned long timerDelay = 3000;
 
-#define LED_BUILTIN D4
-
-uint8_t CameraLedPin = D1;
-uint8_t MicrophoneLedPin = D2;
+#define LED_BUILTIN 8
+#define COMMON_LED_PIN 1
+#define CAMERA_LED_PIN 2
+#define MICROPHONE_LED_PIN 3
 
 void setup() {
   Serial.begin(115200);
 
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(CameraLedPin, OUTPUT);
-  pinMode(MicrophoneLedPin, OUTPUT);
+  pinMode(COMMON_LED_PIN, OUTPUT);
+  pinMode(CAMERA_LED_PIN, OUTPUT);
+  pinMode(MICROPHONE_LED_PIN, OUTPUT);
 
   WiFi.begin(ssid, password);
   Serial.println("Connecting");
@@ -49,7 +46,7 @@ void loop() {
 
       // API path to get status
       String apiPath = serverAddress + "/api/status";
-      http.begin(wifiClient, apiPath.c_str());
+      http.begin(apiPath.c_str());
       // http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
 
       // Send HTTP GET request
@@ -72,12 +69,15 @@ void loop() {
         toggleBuiltinLed(false);
       } else {
         toggleBuiltinLed(true);
+        setLedStatus(LOW, LOW);
         Serial.print("Error code: ");
         Serial.println(httpResponseCode);
       }
       // Free resources
       http.end();
     } else {
+      toggleBuiltinLed(true);
+      setLedStatus(LOW, LOW);
       Serial.println("WiFi Disconnected");
     }
     lastTime = millis();
@@ -85,8 +85,13 @@ void loop() {
 }
 
 void setLedStatus(bool camera, bool microphone) {
-  digitalWrite(CameraLedPin, camera);
-  digitalWrite(MicrophoneLedPin, microphone);
+  if (camera == true || microphone == true) {
+    digitalWrite(COMMON_LED_PIN, true);
+  } else {
+    digitalWrite(COMMON_LED_PIN, false);
+  }
+  digitalWrite(CAMERA_LED_PIN, camera);
+  digitalWrite(MICROPHONE_LED_PIN, microphone);
 }
 
 void toggleBuiltinLed(bool value) {
